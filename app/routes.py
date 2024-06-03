@@ -5,13 +5,19 @@ import string
 import os
 #from .models import Account
 from huggingface_hub import InferenceClient
-import pandas as pd
 from docx import Document
 import pypandoc
 import fitz
 import magic
 import csv
 import time
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import io
+import base64
+from matplotlib.ticker import MaxNLocator
 
 with open('/Users/susannamau/Dev/BPER/Challenge/config.json', 'r') as config_file:
     config = json.load(config_file)
@@ -302,3 +308,50 @@ def submit_feedback():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+
+##################################
+
+@main.route('/login', methods=['POST', 'GET'])
+def admin_login():
+    return render_template('login.html')
+
+@main.route('/admin-dashboard', methods=['POST', 'GET'])
+def admin_dashboard():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    if username == config['ADMIN_USERNAME'] and password == config['ADMIN_PASSWORD']:
+        df = pd.read_csv(config['FEEDBACK_FILE'])
+        avg_rating = round(df['Rating'].mean(), 2)
+        avg_response_time = round(df['Execution Time'].mean(), 2)
+        
+        # Genera il grafico del tempo in funzione del numero di parole
+        plt.figure(figsize=(10, 6))
+        plt.scatter(df['Response Word Count'], df['Execution Time'], alpha=0.5)
+        plt.title('Response Time vs Number of Words of Response')
+        plt.xlabel('Response Word Count')
+        plt.ylabel('Response Time (s)')
+        scatter_img = io.BytesIO()
+        plt.savefig(scatter_img, format='png')
+        scatter_img.seek(0)
+        scatter_url = base64.b64encode(scatter_img.getvalue()).decode('utf8')
+        plt.close()  # Chiude la figura per liberare memoria
+        
+        # Genera l'istogramma dei rating
+        plt.figure(figsize=(10, 6))
+        df['Rating'].hist(bins=[1, 2, 3, 4, 5, 6], edgecolor='black', align='left')
+        plt.title('Distribution of Ratings')
+        plt.xlabel('Rating')
+        plt.ylabel('Frequency')
+        plt.xticks([1, 2, 3, 4, 5])
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+        hist_img = io.BytesIO()
+        plt.savefig(hist_img, format='png')
+        hist_img.seek(0)
+        hist_url = base64.b64encode(hist_img.getvalue()).decode('utf8')
+        plt.close()  # Chiude la figura per liberare memoria
+        
+        return render_template('admin_dashboard.html', avg_rating=avg_rating, avg_response_time=avg_response_time,
+                               scatter_url=scatter_url, hist_url=hist_url)
+    else:
+        return "Invalid credentials", 401
