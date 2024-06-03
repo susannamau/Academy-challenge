@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .file-list {
+            list-style-type: disc;  /* Pallini per la lista */
+            padding-left: 20px;     /* Spazio a sinistra per i pallini */
+            margin: 0;
+        }
+        .file-list li {
+            margin: 5px 0;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list li a {
+            flex-grow: 1;
+            margin-right: 20px;
+        }
+        .delete-button {
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .question-form {
+            margin-top: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .question-form input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .question-form button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>Differences finder</h1>
+
+        <h2>Upload file 1</h2>
+        <p>Vengono accettati solo file di tipo txt, csv, doc, docx, pdf</p>
+        <form class="upload-form" method="POST" enctype="multipart/form-data" action="/upload_diff">
+            <input type="file" id="file" name="file" accept=".txt, .csv, .doc, .docx, .pdf" required>
+            <button type="submit">Upload file</button>
+        </form>
+
+        <h2>Upload file 2</h2>
+        <p>Vengono accettati solo file di tipo txt, csv, doc, docx, pdf</p>
+        <form class="upload-form" method="POST" enctype="multipart/form-data" action="/upload_diff">
+            <input type="file" id="file" name="file" accept=".txt, .csv, .doc, .docx, .pdf" required>
+            <button type="submit">Upload file</button>
+        </form>
+    </div>
+    
+    <div class="question-form">
+            <h2>Find differences</h2>
+            <form id="questionForm">
+                <!-- <input type="text" id="question" name="question" placeholder="Enter your question" required> -->
+                <button type="submit">Go!</button>
+            </form>
+            <div id="response" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const question = document.getElementById('question').value;
+            fetch('{{ url_for("main.ask_question") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseDiv = document.getElementById('response');
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = '<strong>Answer:</strong> ' + data.answer;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+
+
+</html>
