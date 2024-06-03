@@ -225,7 +225,9 @@ def doc_diffs():
 
     try:
         ext1 = filename1.rsplit('.', 1)[1].lower()
+        print("1:", ext1)
         ext2 = filename2.rsplit('.', 1)[1].lower()
+        print("2:", ext2)
 
         content1 = get_files_content(file_path1)
         content2 = get_files_content(file_path2)
