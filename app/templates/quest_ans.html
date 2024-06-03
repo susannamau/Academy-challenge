@@ -90,7 +90,8 @@
 
 <body>
     <div class="container">
-        <img src="/Users/susannamau/Dev/BPER/Challenge/app/logo.png" alt="BPER Banca Logo" class="logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="BPER Banca Logo" class="logo">
+        
         <h1>Question Answering</h1>
         <h2>Upload a file</h2>
         <p>Only txt, csv, doc, docx, pdf files are accepted.</p>

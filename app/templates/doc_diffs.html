@@ -1,25 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Differences-finder</title>
+    <title>Differences Finder</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(45deg, #007b5e, #009b72);
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 20px auto;
             padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #007b5e;
+        }
+        .upload-form, .question-form, .feedback-form {
+            margin-top: 20px;
+        }
+        input[type="file"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007b5e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #005f47;
         }
         .file-list {
-            list-style-type: disc;  /* Pallini per la lista */
-            padding-left: 20px;     /* Spazio a sinistra per i pallini */
-            margin: 0;
+            list-style-type: none;
+            padding: 0;
         }
         .file-list li {
-            margin: 5px 0;
+            margin: 10px 0;
             padding: 10px;
-            background-color: #f4f4f4;
+            background-color: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 4px;
             display: flex;
@@ -27,31 +58,16 @@
             align-items: center;
         }
         .file-list li a {
+            color: #007b5e;
+            text-decoration: none;
             flex-grow: 1;
-            margin-right: 20px;
+        }
+        .file-list li a:hover {
+            text-decoration: underline;
         }
         .delete-button {
             padding: 5px 10px;
             background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .question-form {
-            margin-top: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .question-form input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .question-form button {
-            padding: 10px 20px;
-            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
@@ -64,39 +80,41 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        .feedback-form {
-            margin-top: 20px;
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            width: 150px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="BPER Banca Logo" class="logo">
+        <h1>Differences Finder</h1>
 
-        <h1>Differences finder</h1>
-
-        <h2>Upload file 1</h2>
-        <p>Vengono accettati solo file di tipo txt, csv, doc, docx, pdf</p>
+        <h2>Upload File 1</h2>
+        <p>Only txt, csv, doc, docx, pdf files are accepted.</p>
         <form id="upload-form1" class="upload-form" method="POST" enctype="multipart/form-data">
             <input type="file" id="file1" name="file1" accept=".txt, .csv, .doc, .docx, .pdf" required>
-            <button type="submit">Upload file 1</button>
+            <button type="submit">Upload File 1</button>
         </form>
 
-        <h2>Upload file 2</h2>
-        <p>Vengono accettati solo file di tipo txt, csv, doc, docx, pdf</p>
+        <h2>Upload File 2</h2>
+        <p>Only txt, csv, doc, docx, pdf files are accepted.</p>
         <form id="upload-form2" class="upload-form" method="POST" enctype="multipart/form-data">
             <input type="file" id="file2" name="file2" accept=".txt, .csv, .doc, .docx, .pdf" required>
-            <button type="submit">Upload file 2</button>
+            <button type="submit">Upload File 2</button>
         </form>
     </div>
-    
-    <div class="question-form">
-        <h2>Find differences</h2>
+
+    <div class="container">
+        <h2>Find Differences</h2>
         <button id="ask-button" type="button">Go!</button>
         <div id="response" class="response" style="display: none;"></div>
     </div>
 
-    <div class="feedback-form">
+    <div class="container feedback-form">
         <h2>Provide Feedback</h2>
         <form id="feedback-form" method="POST">
             <label for="rating">Rate the response (1-5):</label>
@@ -137,6 +155,7 @@
                 responseDiv.style.display = 'block';
                 if (data.differences) {
                     responseDiv.innerHTML = '<strong>Differences:</strong> ' + data.differences;
+                    showFeedbackForm();
                 } else {
                     responseDiv.innerHTML = '<strong>Error:</strong> ' + data.error;
                 }
@@ -188,41 +207,7 @@
             });
         });
 
-        function showFeedbackForm() {
-        document.querySelector('.feedback-form').style.display = 'block';
-    }
-
-    document.getElementById('ask-button').addEventListener('click', function(event) {
-        event.preventDefault();
-        const filename1 = localStorage.getItem('uploadedFile1');
-        const filename2 = localStorage.getItem('uploadedFile2');
-        fetch('/doc_diffs', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                filename1: filename1,
-                filename2: filename2
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            const responseDiv = document.getElementById('response');
-            responseDiv.style.display = 'block';
-            if (data.differences) {
-                responseDiv.innerHTML = '<strong>Differences:</strong> ' + data.differences;
-                showFeedbackForm();
-            } else {
-                responseDiv.innerHTML = '<strong>Error:</strong> ' + data.error;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    });
-
-    document.getElementById('feedback-form').addEventListener('submit', function(event) {
+        document.getElementById('feedback-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const rating = document.getElementById('rating').value;
             const file1Length = localStorage.getItem('file1Length');

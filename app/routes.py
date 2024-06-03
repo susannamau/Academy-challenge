@@ -31,13 +31,14 @@ def welcome():
 
 @main.route('/task_choice', methods=['POST', 'GET'])
 def task_choice():
-    if request.form.get('submit_button') == 'Question answering':
+    print(request.form['submit_button'])
+    if request.form['submit_button'] == 'Question Answering':
         files = get_files()
         return render_template("quest_ans.html", files=files)
-    elif request.form.get('submit_button') == 'Documents differences finder':
+    elif request.form['submit_button'] == 'Documents Differences Finder':
         return render_template("doc_diffs.html")
     else:
-        print("Error")
+        return "Invalid task selected", 400
 
 @main.route('/quest_ans', methods=['POST', 'GET'])
 def quest_ans():
