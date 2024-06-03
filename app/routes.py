@@ -10,16 +10,23 @@ from docx import Document
 import pypandoc
 import fitz
 import magic
+import csv
+import time
 
 with open('/Users/susannamau/Dev/BPER/Challenge/config.json', 'r') as config_file:
     config = json.load(config_file)
+
+if not os.path.exists(config["FEEDBACK_FILE"]):
+    with open(config["FEEDBACK_FILE"], mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["File1 Word Count", "File2 Word Count", "Response Word Count", "Execution Time", "Rating"])
+
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def welcome():
     return render_template("task_choice.html")
-
 
 
 @main.route('/task_choice', methods=['POST', 'GET'])
@@ -208,6 +215,7 @@ def get_file_content(file_path):
 
 @main.route('/doc_diffs', methods=['POST'])
 def doc_diffs():
+    start_time = time.time()
     data = request.get_json()
     print(data)
     filename1 = data.get('filename1')
@@ -218,43 +226,78 @@ def doc_diffs():
     
     file_path1 = os.path.join(config['COMP_FOLDER'], filename1)
     file_path2 = os.path.join(config['COMP_FOLDER'], filename2)
-    print(file_path1, file_path2)
+    #print(file_path1, file_path2)
 
     if not os.path.exists(file_path1) or not os.path.exists(file_path2):
         return jsonify({'error': 'One or both files do not exist.'}), 404
 
     try:
         ext1 = filename1.rsplit('.', 1)[1].lower()
-        print("1:", ext1)
         ext2 = filename2.rsplit('.', 1)[1].lower()
-        print("2:", ext2)
 
-        content1 = get_files_content(file_path1)
-        content2 = get_files_content(file_path2)
+        content1 = get_file_content(file_path1)
+        content2 = get_file_content(file_path2)
+
+        len_input_1 = len(content1.split())
+        len_input_2 = len(content2.split())
 
         hf_token = config["HF_TOKEN"]
         hf_client = InferenceClient(token=hf_token)
         llm_model = config["LLM"]
 
         messages = [
-            {"role": "system", "content": "Trova le differenze tra i due documenti seguenti."},
-            {"role": "system", "content": f"Il primo documento è: {content1}"},
-            {"role": "system", "content": f"Il secondo documento è: {content2}"},
-            {"role": "user", "content": "Restituiscimi una lista ordinata delle differenze tra i due documenti."}
+            {"role": "system", "content": "Sei un assistente intelligente incaricato di trovare le differenze tra documenti di testo."},
+            {"role": "system", "content": "Ti fornirò due documenti di testo e tu dovrai restituirmi una lista ordinata delle differenze tra di essi."},
+            {"role": "system", "content": f"Il primo documento è:\n\n{content1}"},
+            {"role": "system", "content": f"Il secondo documento è:\n\n{content2}"},
+            {"role": "user", "content": "Analizza i due documenti e forniscimi una lista dettagliata delle differenze tra di essi. Includi differenze di contenuto."}
         ]
 
-        completion = hf_client.chat_completion(model=llm_model, messages=messages, max_tokens=500)
+        os.remove(file_path1)
+        os.remove(file_path2)
+
+        completion = hf_client.chat_completion(model=llm_model, messages=messages, max_tokens=1000)
         response = completion.choices[0].message.content
+        #print(response)
 
         if response:
-            os.unlink(file_path1)
-            os.unlink(file_path2)
+            session['file1_word_count'] = len_input_1
+            session['file2_word_count'] = len_input_2
+            session['response_word_count'] = len(response.split())
+            session['execution_time'] = time.time() - start_time
             return jsonify({'differences': response})
         else:
-            os.unlink(file_path1)
-            os.unlink(file_path2)
             return jsonify({'error': 'There was an error processing your request.'})
         print("fine try")
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-#############
+    
+
+##############################################################
+
+if not os.path.exists(config["FEEDBACK_FILE"]):
+    with open(config["FEEDBACK_FILE"], mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Rating"])
+
+@main.route('/submit_feedback', methods=['POST', 'GET'])
+def submit_feedback():
+    data = request.get_json()
+    rating = data.get('rating')
+
+    if not rating:
+        return jsonify({'success': False, 'error': 'Invalid rating'}), 400
+    
+    print(session)
+    file1_word_count = session.get('file1_word_count', 0)
+    file2_word_count = session.get('file2_word_count', 0)
+    response_word_count = session.get('response_word_count', 0)
+    execution_time = session.get('execution_time', 0)
+
+    try:
+        with open(config["FEEDBACK_FILE"], mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([file1_word_count, file2_word_count, response_word_count, execution_time, rating])
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

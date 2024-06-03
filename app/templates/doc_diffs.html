@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User dashboard</title>
+    <title>Differences-finder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,6 +64,9 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        .feedback-form {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -93,7 +96,27 @@
         <div id="response" class="response" style="display: none;"></div>
     </div>
 
+    <div class="feedback-form">
+        <h2>Provide Feedback</h2>
+        <form id="feedback-form" method="POST">
+            <label for="rating">Rate the response (1-5):</label>
+            <select id="rating" name="rating" required>
+                <option value="" disabled selected>Select your rating</option>
+                <option value="1">1 - Very Poor</option>
+                <option value="2">2 - Poor</option>
+                <option value="3">3 - Neutral</option>
+                <option value="4">4 - Good</option>
+                <option value="5">5 - Excellent</option>
+            </select>
+            <button type="submit">Submit Feedback</button>
+        </form>
+    </div>
+
     <script>
+        function showFeedbackForm() {
+            document.querySelector('.feedback-form').style.display = 'block';
+        }
+
         document.getElementById('ask-button').addEventListener('click', function(event) {
             event.preventDefault();
             const filename1 = localStorage.getItem('uploadedFile1');
@@ -158,6 +181,74 @@
                     alert('File 2 uploaded successfully.');
                 } else {
                     alert('Error uploading file 2.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        function showFeedbackForm() {
+        document.querySelector('.feedback-form').style.display = 'block';
+    }
+
+    document.getElementById('ask-button').addEventListener('click', function(event) {
+        event.preventDefault();
+        const filename1 = localStorage.getItem('uploadedFile1');
+        const filename2 = localStorage.getItem('uploadedFile2');
+        fetch('/doc_diffs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filename1: filename1,
+                filename2: filename2
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            const responseDiv = document.getElementById('response');
+            responseDiv.style.display = 'block';
+            if (data.differences) {
+                responseDiv.innerHTML = '<strong>Differences:</strong> ' + data.differences;
+                showFeedbackForm();
+            } else {
+                responseDiv.innerHTML = '<strong>Error:</strong> ' + data.error;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+    document.getElementById('feedback-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const rating = document.getElementById('rating').value;
+            const file1Length = localStorage.getItem('file1Length');
+            const file2Length = localStorage.getItem('file2Length');
+            const responseLength = localStorage.getItem('responseLength');
+            const executionTime = localStorage.getItem('executionTime');
+            fetch('/submit_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rating: rating,
+                    file1Length: file1Length,
+                    file2Length: file2Length,
+                    responseLength: responseLength,
+                    executionTime: executionTime
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you for your feedback!');
+                    document.querySelector('.feedback-form').style.display = 'none';
+                } else {
+                    alert('Error submitting feedback.');
                 }
             })
             .catch(error => {
