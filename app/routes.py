@@ -153,59 +153,106 @@ def ask_question():
         return jsonify({'answer': response})
     else:
         return jsonify({'answer': 'There was an error processing your question.'})
-
+    
+##############################################################
+    
 @main.route('/upload_diff', methods=['POST'])
 def upload_file_diff():
-    if 'file' not in request.files:
-        return "Nessun file selezionato", 400
+    if 'file1' in request.files:
+        file1 = request.files['file1']
+        if file1.filename == '':
+            return jsonify({'error': 'Nome file non valido'}), 400
+        if file1 and allowed_file(file1.filename):
+            os.makedirs(config['COMP_FOLDER'], exist_ok=True)
+            file_path1 = os.path.join(config['COMP_FOLDER'], file1.filename)
+            file1.save(file_path1)
+            return jsonify({'filename': file1.filename})
 
-    file = request.files['file']
-    if file.filename == '':
-        return "Nome file non valido", 400
+    if 'file2' in request.files:
+        file2 = request.files['file2']
+        if file2.filename == '':
+            return jsonify({'error': 'Nome file non valido'}), 400
+        if file2 and allowed_file(file2.filename):
+            os.makedirs(config['COMP_FOLDER'], exist_ok=True)
+            file_path2 = os.path.join(config['COMP_FOLDER'], file2.filename)
+            file2.save(file_path2)
+            return jsonify({'filename': file2.filename})
 
-    if file and allowed_file(file.filename):
-        os.makedirs(config['COMP_FOLDER'], exist_ok=True)
-        file_path = os.path.join(config['COMP_FOLDER'], file.filename)
-        file.save(file_path)
-        files = get_files()
-        return render_template("doc_diffs.html", files=files)
-    
-    if allowed_file(file.filename) == False:
-        return "Estensione file non valida", 400
+    return jsonify({'error': 'Nessun file selezionato'}), 400
+
+def get_file_content(file_path):
+    file = file_path
+    ext = file.rsplit('.', 1)[1].lower()
+    if ext == "txt":
+        with open(f'{file}', 'r') as file:
+            content = file.read()
+    elif ext == "csv":
+        content = list(pd.read_csv(f'{file}'))
+    elif ext == "docx":
+        doc = Document(f'{file}')
+        content = ""
+        for paragraph in doc.paragraphs:
+            content += paragraph.text + "\n"
+    elif ext == "doc":
+        content = pypandoc.convert_file(f'{file}', to="plain")
+    elif ext == "pdf":
+        pdf_document = fitz.open(f"{file}")
+        content = ""
+        for page_num in range(len(pdf_document)):
+            page = pdf_document.load_page(page_num)
+            content += page.get_text()
+    else:
+        content = magic.Magic(mime=True)
+        content = content.from_file(f"{file}")
+    return content
 
 @main.route('/doc_diffs', methods=['POST'])
 def doc_diffs():
     data = request.get_json()
-    filename1 = data['filename1']
-    filename2 = data['filename2']
+    print(data)
+    filename1 = data.get('filename1')
+    filename2 = data.get('filename2')
+
+    if not filename1 or not filename2:
+        return jsonify({'error': 'Invalid input data.'}), 400
+    
     file_path1 = os.path.join(config['COMP_FOLDER'], filename1)
     file_path2 = os.path.join(config['COMP_FOLDER'], filename2)
+    print(file_path1, file_path2)
 
     if not os.path.exists(file_path1) or not os.path.exists(file_path2):
-        return jsonify({'error': 'One or both files do not exist.'})
+        return jsonify({'error': 'One or both files do not exist.'}), 404
 
-    ext1 = filename1.rsplit('.', 1)[1].lower()
-    ext2 = filename2.rsplit('.', 1)[1].lower()
+    try:
+        ext1 = filename1.rsplit('.', 1)[1].lower()
+        ext2 = filename2.rsplit('.', 1)[1].lower()
 
-    content1 = get_files_content(file_path1)
-    content2 = get_files_content(file_path2)
+        content1 = get_files_content(file_path1)
+        content2 = get_files_content(file_path2)
 
-    hf_token = config["HF_TOKEN"]
-    hf_client = InferenceClient(token=hf_token)
-    llm_model = config["LLM"]
+        hf_token = config["HF_TOKEN"]
+        hf_client = InferenceClient(token=hf_token)
+        llm_model = config["LLM"]
 
-    messages=[
-    {"role": "system", "content": "Trova le differenze tra due documenti."},
-    {"role": "system", "content": f"Il primo documento è: {content1}"},
-    {"role": "system", "content": f"Il secondo documento è: {content2}"},
-    {"role": "user", "content": "Restituiscimi una lista ordinata delle differenze tra i due documenti."}
-    ]
+        messages = [
+            {"role": "system", "content": "Trova le differenze tra i due documenti seguenti."},
+            {"role": "system", "content": f"Il primo documento è: {content1}"},
+            {"role": "system", "content": f"Il secondo documento è: {content2}"},
+            {"role": "user", "content": "Restituiscimi una lista ordinata delle differenze tra i due documenti."}
+        ]
 
-    completion = hf_client.chat_completion(model=llm_model, messages=messages, max_tokens=500)
-    response = completion.choices[0].message.content
+        completion = hf_client.chat_completion(model=llm_model, messages=messages, max_tokens=500)
+        response = completion.choices[0].message.content
 
-    if response:
-        return jsonify({'differences': response})
-    else:
-        return jsonify({'error': 'There was an error processing your request.'})
-
+        if response:
+            os.unlink(file_path1)
+            os.unlink(file_path2)
+            return jsonify({'differences': response})
+        else:
+            os.unlink(file_path1)
+            os.unlink(file_path2)
+            return jsonify({'error': 'There was an error processing your request.'})
+        print("fine try")
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+#############
