@@ -1,25 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User dashboard</title>
+    <title>User Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(45deg, #007b5e, #009b72);
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 20px auto;
             padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #007b5e;
+        }
+        .upload-form, .question-form, .feedback-form {
+            margin-top: 20px;
+        }
+        input[type="file"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007b5e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #005f47;
         }
         .file-list {
-            list-style-type: disc;  /* Pallini per la lista */
-            padding-left: 20px;     /* Spazio a sinistra per i pallini */
-            margin: 0;
+            list-style-type: none;
+            padding: 0;
         }
         .file-list li {
-            margin: 5px 0;
+            margin: 10px 0;
             padding: 10px;
-            background-color: #f4f4f4;
+            background-color: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 4px;
             display: flex;
@@ -27,31 +58,16 @@
             align-items: center;
         }
         .file-list li a {
+            color: #007b5e;
+            text-decoration: none;
             flex-grow: 1;
-            margin-right: 20px;
+        }
+        .file-list li a:hover {
+            text-decoration: underline;
         }
         .delete-button {
             padding: 5px 10px;
             background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .question-form {
-            margin-top: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .question-form input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .question-form button {
-            padding: 10px 20px;
-            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
@@ -64,43 +80,59 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            width: 150px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-
-        <h1>Question answering</h1>
-
+        <img src="/Users/susannamau/Dev/BPER/Challenge/app/logo.png" alt="BPER Banca Logo" class="logo">
+        <h1>Question Answering</h1>
         <h2>Upload a file</h2>
-        <p>Vengono accettati solo file di tipo txt, csv, doc, docx, pdf</p>
+        <p>Only txt, csv, doc, docx, pdf files are accepted.</p>
         <form class="upload-form" method="POST" enctype="multipart/form-data" action="/upload_qa">
-            <!-- <label for="file">Carica un file (txt, csv, doc, docx):</label> -->
             <input type="file" id="file" name="file" accept=".txt, .csv, .doc, .docx, .pdf" required>
-            <button type="submit">Upload file</button>
+            <button type="submit">Upload File</button>
         </form>
-    </div>
 
-    <div class="question-form">
-            <h2>Ask a question</h2>
+        <div class="question-form">
+            <h2>Ask a Question</h2>
             <form id="questionForm">
                 <input type="text" id="question" name="question" placeholder="Enter your question" required>
                 <button type="submit">Submit</button>
             </form>
             <div id="response" class="response" style="display: none;"></div>
-        
-    </div>
+        </div>
 
-    <div class="container">
-        <h2>Recent files</h2>
+        <h2>Recent Files</h2>
         <ul class="file-list">
             {% for file in files %}
                 <li>
                     <a href="{{ url_for('main.download_file', filename=file) }}" download>{{ file }}</a>
-                    <button class="delete-button" onclick="deleteFile('{{ file }}')">Delete file</button>
+                    <button class="delete-button" onclick="deleteFile('{{ file }}')">Delete File</button>
                 </li>
             {% endfor %}
         </ul>
+
+        <div class="feedback-form">
+            <h2>Provide Feedback</h2>
+            <form id="feedback-form" method="POST">
+                <label for="rating">Rate the response (1-5):</label>
+                <select id="rating" name="rating" required>
+                    <option value="" disabled selected>Select your rating</option>
+                    <option value="1">1 - Very Poor</option>
+                    <option value="2">2 - Poor</option>
+                    <option value="3">3 - Neutral</option>
+                    <option value="4">4 - Good</option>
+                    <option value="5">5 - Excellent</option>
+                </select>
+                <button type="submit">Submit Feedback</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -145,8 +177,40 @@
                 console.error('Error:', error);
             });
         });
+
+        document.getElementById('feedback-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const rating = document.getElementById('rating').value;
+            const file1Length = localStorage.getItem('file1Length');
+            const file2Length = localStorage.getItem('file2Length');
+            const responseLength = localStorage.getItem('responseLength');
+            const executionTime = localStorage.getItem('executionTime');
+            fetch('/submit_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rating: rating,
+                    file1Length: file1Length,
+                    file2Length: file2Length,
+                    responseLength: responseLength,
+                    executionTime: executionTime
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you for your feedback!');
+                    document.querySelector('.feedback-form').style.display = 'none';
+                } else {
+                    alert('Error submitting feedback.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
     </script>
 </body>
-
-
 </html>

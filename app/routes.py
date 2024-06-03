@@ -247,7 +247,7 @@ def doc_diffs():
 
         messages = [
             {"role": "system", "content": "Sei un assistente intelligente incaricato di trovare le differenze tra documenti di testo."},
-            {"role": "system", "content": "Ti fornirò due documenti di testo e tu dovrai restituirmi una lista ordinata delle differenze tra di essi."},
+            {"role": "system", "content": "Ti fornirò due documenti di testo e tu dovrai restituirmi una lista ordinata delle differenze tra di essi. Voglio che la risposta sia in italiano."},
             {"role": "system", "content": f"Il primo documento è:\n\n{content1}"},
             {"role": "system", "content": f"Il secondo documento è:\n\n{content2}"},
             {"role": "user", "content": "Analizza i due documenti e forniscimi una lista dettagliata delle differenze tra di essi. Includi differenze di contenuto."}
