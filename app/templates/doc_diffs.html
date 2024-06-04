@@ -154,10 +154,19 @@
                 const responseDiv = document.getElementById('response');
                 responseDiv.style.display = 'block';
                 if (data.differences) {
-                    responseDiv.innerHTML = '<strong>Differences:</strong> ' + data.differences;
+                    // let response = '<strong>Differenze di contenuto:</strong> ' + data.differences;
+                    let response = data.differences;
+                    console.log('Before:', response);  // Log before replacements
+                    response = response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    response = response.replace(/\* (.*?):/g, '<strong>$1:</strong>');
+                    response = response.replace(/\n/g, '<br>');
+                    console.log('After:', response);  // Log after replacements
+                    document.getElementById('response').innerHTML = response;
                     showFeedbackForm();
                 } else {
-                    responseDiv.innerHTML = '<strong>Error:</strong> ' + data.error;
+                    let response = '<strong>Error:</strong> ' + data.error;
+                    response = response.replace(/\n/g, '<br>');
+                    responseDiv.innerHTML = response;
                 }
             })
             .catch(error => {

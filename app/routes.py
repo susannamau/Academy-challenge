@@ -253,11 +253,11 @@ def doc_diffs():
         llm_model = config["LLM"]
 
         messages = [
-            {"role": "system", "content": "Sei un assistente intelligente incaricato di trovare le differenze tra documenti di testo."},
-            {"role": "system", "content": "Ti fornirò due documenti di testo e tu dovrai restituirmi una lista ordinata delle differenze tra di essi. Voglio che la risposta sia in italiano."},
+            {"role": "system", "content": "Sei un assistente intelligente incaricato di trovare le differenze tra documenti di testo e di rispondermi in italiano."},
+            {"role": "system", "content": "Ti fornirò due documenti di testo e tu dovrai restituirmi una lista ordinata delle differenze tra di essi. Voglio che la risposta sia in italiano. Voglio che i titoli di ogni sezione della risposta siano tra ** e **."},
             {"role": "system", "content": f"Il primo documento è:\n\n{content1}"},
             {"role": "system", "content": f"Il secondo documento è:\n\n{content2}"},
-            {"role": "user", "content": "Analizza i due documenti e forniscimi una lista dettagliata delle differenze tra di essi. Includi differenze di contenuto."}
+            {"role": "user", "content": "Analizza i due documenti e forniscimi una lista dettagliata delle differenze tra di essi. Includi differenze di contenuto. Alla fine di tutte le differenze, scrivi un paragrafo intitolato Explainability dove spieghi come sei arrivato alla risposta che mi hai dato."}
         ]
 
         os.remove(file_path1)
