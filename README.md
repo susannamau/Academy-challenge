@@ -22,8 +22,8 @@ graph TD
     B3 --> K{Login}
     K -- Successful --> L[Admin dashboard]
     K -- Unsuccessful --> M[Invalid credentials]
-    L --> M[Average user feedback]
-    L --> N[Average response time]
-    L --> O[Scatterplot Response Word Count x Response Time]
-    L --> P[Barplot User feedback]
-    L --> Q[Table of files with feedback 1 or 2]
+    L --> N[Average user feedback]
+    L --> O[Average response time]
+    L --> P[Scatterplot Response Word Count x Response Time]
+    L --> Q[Barplot User feedback]
+    L --> R[Table of files with feedback 1 or 2]
