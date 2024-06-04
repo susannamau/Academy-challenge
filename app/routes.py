@@ -25,7 +25,7 @@ with open('/Users/susannamau/Dev/BPER/Challenge/config.json', 'r') as config_fil
 if not os.path.exists(config["FEEDBACK_FILE"]):
     with open(config["FEEDBACK_FILE"], mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["File1 Word Count", "File2 Word Count", "Response Word Count", "Execution Time", "Rating"])
+        writer.writerow(["File1","File2","File1 Word Count", "File2 Word Count", "Response Word Count", "Execution Time", "Rating"])
 
 
 main = Blueprint('main', __name__)
@@ -268,6 +268,8 @@ def doc_diffs():
         #print(response)
 
         if response:
+            session['file1'] = filename1
+            session['file2'] = filename2
             session['file1_word_count'] = len_input_1
             session['file2_word_count'] = len_input_2
             session['response_word_count'] = len(response.split())
@@ -296,6 +298,8 @@ def submit_feedback():
         return jsonify({'success': False, 'error': 'Invalid rating'}), 400
     
     print(session)
+    file1 = session.get('file1', '')
+    file2 = session.get('file2', '')
     file1_word_count = session.get('file1_word_count', 0)
     file2_word_count = session.get('file2_word_count', 0)
     response_word_count = session.get('response_word_count', 0)
@@ -304,7 +308,7 @@ def submit_feedback():
     try:
         with open(config["FEEDBACK_FILE"], mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([file1_word_count, file2_word_count, response_word_count, execution_time, rating])
+            writer.writerow([file1, file2, file1_word_count, file2_word_count, response_word_count, execution_time, rating])
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -324,6 +328,10 @@ def admin_dashboard():
         df = pd.read_csv(config['FEEDBACK_FILE'])
         avg_rating = round(df['Rating'].mean(), 2)
         avg_response_time = round(df['Execution Time'].mean(), 2)
+
+        # File con rating bassi
+        df["Execution Time"] = df["Execution Time"].round(2)
+        low_ratings_df = df[df['Rating'].isin([1, 2])]
         
         # Genera il grafico del tempo in funzione del numero di parole
         plt.figure(figsize=(10, 6))
@@ -352,6 +360,6 @@ def admin_dashboard():
         plt.close()  # Chiude la figura per liberare memoria
         
         return render_template('admin_dashboard.html', avg_rating=avg_rating, avg_response_time=avg_response_time,
-                               scatter_url=scatter_url, hist_url=hist_url)
+                               scatter_url=scatter_url, hist_url=hist_url, low_ratings_df=low_ratings_df.to_dict(orient='records'))
     else:
         return "Invalid credentials", 401

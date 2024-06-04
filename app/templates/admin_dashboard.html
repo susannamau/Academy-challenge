@@ -22,6 +22,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             text-align: center;
+            overflow-x: auto;
         }
         h1 {
             color: #007b5e;
@@ -59,6 +60,29 @@
         .admin-button:hover {
             background-color: #005f47;
         }
+        .low-ratings {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffefef;
+            border: 1px solid #ffcccc;
+            border-radius: 8px;
+        }
+        .low-ratings h2 {
+            color: #d9534f;
+        }
+        .low-ratings table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .low-ratings table, .low-ratings th, .low-ratings td {
+            border: 1px solid #d9534f;
+        }
+        .low-ratings th, .low-ratings td {
+            padding: 10px;
+            text-align: left;
+            word-break: break-word;
+            max-width: 30px; /* Imposta una larghezza massima per le celle */
+        }
     </style>
 </head>
 <body>
@@ -71,6 +95,27 @@
         <div class="charts">
             <img src="data:image/png;base64,{{ scatter_url }}" alt="Response Time vs Number of Words of Response">
             <img src="data:image/png;base64,{{ hist_url }}" alt="Distribution of Ratings">
+        </div>
+        <div class="low-ratings">
+            <h2>Low Ratings (1 or 2)</h2>
+            <table>
+                <tr>
+                    <th>File 1</th>
+                    <th>File 2</th>
+                    <th>Rating</th>
+                    <th>Execution Time</th>
+                    <th>Response Word Count</th>
+                </tr>
+                {% for row in low_ratings_df %}
+                <tr>
+                    <td>{{ row.File1 }}</td>
+                    <td>{{ row.File2 }}</td>
+                    <td>{{ row.Rating }}</td>
+                    <td>{{ row['Execution Time'] }}</td>
+                    <td>{{ row['Response Word Count'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
         </div>
     </div>
 </body>

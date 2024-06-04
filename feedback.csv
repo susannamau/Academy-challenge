@@ -1,7 +1,3 @@
-File1 Word Count,File2 Word Count,Response Word Count,Execution Time,Rating
-7,7,98,0.3680140972137451,5
-1107,535,546,29.70595407485962,5
-503,208,324,12.837464832,3
-17,71,198,6.3680140972137451,4
-1121,335,236,18.70595407485962,5
-202,376,242,23.837464832,4
+File1,File2,File1 Word Count,File2 Word Count,Response Word Count,Execution Time,Rating
+Aggiornamento_n_46_del_30_aprile_2024.pdf,Atto_di_emanazione_del_46_aggiornamento.pdf,1107,535,346,22.592043161392212,2
+Presentazione personale copy.txt,Presentazione personale.txt,7,7,128,5.26443076133728,5
