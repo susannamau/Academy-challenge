@@ -5,7 +5,7 @@
 
 ```mermaid
 graph TB
-    A[Home: quale task vuoi performare?] --> B[Question Answering]
+    A[Home: what task do you want to perform?] --> B[Question Answering]
     A --> B2[Comparison of files]
     A --> B3[Admin]
 
