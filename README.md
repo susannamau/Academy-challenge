@@ -5,7 +5,7 @@ Authors: Susanna Maugeri & Riccardo Sparacino.
 This is a web application built with Flask. The application allows users to upload files and ask questions and to compare two files to find differences between them.
 
 
-### The features
+## The features
 The features implemented so far are:
 
 * Question Answering
@@ -27,7 +27,7 @@ The features implemented so far are:
         * Barplot of User Feedbacks
         * Table of the files to be checked because they got feedback 1 or 2
 
-### The model
+## The model
 The underling model is [LLaMA3](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct) by Meta and the API is implemented by [HuggingFace](https://huggingface.co/). 
 
 ## Requirements
@@ -43,7 +43,7 @@ Install the libraries in `requirements.txt`.
 When running `run.py`, by default the application will we available at `http://127.0.0.1:5000/`.
 
 
-# Structure of the App
+## Structure of the App
 
 ```mermaid
 graph TB
